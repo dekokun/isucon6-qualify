@@ -10,6 +10,7 @@ type Entry struct {
 	AuthorID    int
 	Keyword     string
 	Description string
+	Length int
 	UpdatedAt   time.Time
 	CreatedAt   time.Time
 
