@@ -91,6 +91,16 @@ func initializeHandler(w http.ResponseWriter, r *http.Request) {
 	re.JSON(w, http.StatusOK, map[string]string{"result": "ok"})
 }
 
+func starsHandler(w http.ResponseWriter, r *http.Request) {
+	stars := loadStars(mux.Vars(r)["keyword"])
+	re.HTML(w, http.StatusOK, "stars", struct {
+		Context  context.Context
+		Stars  []*Star
+	}{
+		r.Context(), stars,
+	})
+}
+
 func indexKeywordHandler(w http.ResponseWriter, r *http.Request) {
 	perPage := 10
 	p := r.URL.Query().Get("page")
@@ -112,7 +122,6 @@ func indexKeywordHandler(w http.ResponseWriter, r *http.Request) {
 		err := rows.Scan(&e.ID, &e.AuthorID, &e.Keyword, &e.Description, &e.UpdatedAt, &e.CreatedAt, &e.Length)
 		panicIf(err)
 		e.Html = htmlify(w, r, e.Description)
-		e.Stars = loadStars(e.Keyword)
 		entries = append(entries, &e)
 	}
 	rows.Close()
@@ -285,7 +294,6 @@ func keywordByKeywordKeywordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	e.Html = htmlify(w, r, e.Description)
-	e.Stars = loadStars(e.Keyword)
 
 	cacheable(w)
 	re.HTML(w, http.StatusOK, "keyword_keyword", struct {
@@ -501,6 +509,7 @@ func main() {
 	r.HandleFunc("/initialize", myHandler(initializeHandler)).Methods("GET")
 	r.HandleFunc("/robots.txt", myHandler(robotsHandler))
 	r.HandleFunc("/keyword", myHandler(keywordPostHandler)).Methods("POST")
+	r.HandleFunc("/stars/{keyword}", myHandler(starsHandler)).Methods("GET")
 
 	l := r.PathPrefix("/login").Subrouter()
 	l.Methods("GET").HandlerFunc(myHandler(loginHandler))
