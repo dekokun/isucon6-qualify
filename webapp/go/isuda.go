@@ -322,7 +322,15 @@ func keywordByKeywordHandler(w http.ResponseWriter, r *http.Request) {
 		forbidden(w)
 		return
 	}
-	keyword, _ := mux.Vars(r)["keyword"]
+
+	keyword, _ := url.QueryUnescape(mux.Vars(r)["keyword"])
+	row := db.QueryRow(`SELECT * FROM entry WHERE keyword = ?`, keyword)
+	e := Entry{}
+	err := row.Scan(&e.ID, &e.AuthorID, &e.Keyword, &e.Description, &e.UpdatedAt, &e.CreatedAt, &e.Length)
+	if err == sql.ErrNoRows {
+		notFound(w)
+		return
+	}
 	notcache(w)
 	re.HTML(w, http.StatusOK, "keyword", struct {
 		Context context.Context
