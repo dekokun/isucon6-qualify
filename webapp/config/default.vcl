@@ -69,6 +69,7 @@ sub vcl_deliver {
 
 sub vcl_backend_response {
 
+  set beresp.do_esi = true;
   # this is same as builtin vcl_backend_response
   # https://www.varnish-cache.org/trac/browser/bin/varnishd/builtin.vcl?rev=ae548683b8f91d0a92799f6c746b80773a4c9f05
   if (beresp.ttl <= 0s ||
