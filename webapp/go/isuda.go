@@ -93,11 +93,23 @@ func initializeHandler(w http.ResponseWriter, r *http.Request) {
 
 func starsHandler(w http.ResponseWriter, r *http.Request) {
 	stars := loadStars(mux.Vars(r)["keyword"])
+	notcache(w)
 	re.HTML(w, http.StatusOK, "stars", struct {
 		Context  context.Context
 		Stars  []*Star
 	}{
 		r.Context(), stars,
+	})
+}
+
+func usernameHandler(w http.ResponseWriter, r *http.Request) {
+	if err := setName(w, r); err != nil {
+		setContext(r, "user_name", "")
+	}
+	re.HTML(w, http.StatusOK, "username", struct {
+		Context  context.Context
+	}{
+		r.Context(),
 	})
 }
 
@@ -296,6 +308,7 @@ func keywordByKeywordKeywordHandler(w http.ResponseWriter, r *http.Request) {
 	e.Html = htmlify(w, r, e.Description)
 
 	cacheable(w)
+	w.Header().Set("Keyword", keyword)
 	re.HTML(w, http.StatusOK, "keyword_keyword", struct {
 		Context context.Context
 		Entry   Entry
@@ -510,6 +523,7 @@ func main() {
 	r.HandleFunc("/robots.txt", myHandler(robotsHandler))
 	r.HandleFunc("/keyword", myHandler(keywordPostHandler)).Methods("POST")
 	r.HandleFunc("/stars/{keyword}", myHandler(starsHandler)).Methods("GET")
+	r.HandleFunc("/username", myHandler(usernameHandler)).Methods("GET")
 
 	l := r.PathPrefix("/login").Subrouter()
 	l.Methods("GET").HandlerFunc(myHandler(loginHandler))
