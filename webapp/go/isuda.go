@@ -274,11 +274,7 @@ func register(user string, pass string) int64 {
 	return lastInsertID
 }
 
-func keywordByKeywordHandler(w http.ResponseWriter, r *http.Request) {
-	if err := setName(w, r); err != nil {
-		forbidden(w)
-		return
-	}
+func keywordByKeywordKeywordHandler(w http.ResponseWriter, r *http.Request) {
 
 	keyword, _ := url.QueryUnescape(mux.Vars(r)["keyword"])
 	row := db.QueryRow(`SELECT * FROM entry WHERE keyword = ?`, keyword)
@@ -291,12 +287,29 @@ func keywordByKeywordHandler(w http.ResponseWriter, r *http.Request) {
 	e.Html = htmlify(w, r, e.Description)
 	e.Stars = loadStars(e.Keyword)
 
-	re.HTML(w, http.StatusOK, "keyword", struct {
+	cacheable(w)
+	re.HTML(w, http.StatusOK, "keyword_keyword", struct {
 		Context context.Context
 		Entry   Entry
 	}{
 		r.Context(), e,
 	})
+}
+
+func keywordByKeywordHandler(w http.ResponseWriter, r *http.Request) {
+	if err := setName(w, r); err != nil {
+		forbidden(w)
+		return
+	}
+	keyword, _ := mux.Vars(r)["keyword"]
+	notcache(w)
+	re.HTML(w, http.StatusOK, "keyword", struct {
+		Context context.Context
+		Keyword string
+	}{
+		r.Context(), keyword,
+	})
+
 }
 
 func keywordByKeywordDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -501,6 +514,8 @@ func main() {
 	k := r.PathPrefix("/keyword/{keyword}").Subrouter()
 	k.Methods("GET").HandlerFunc(myHandler(keywordByKeywordHandler))
 	k.Methods("POST").HandlerFunc(myHandler(keywordByKeywordDeleteHandler))
+	kk := r.PathPrefix("/keyword_keyword/{keyword}").Subrouter()
+	kk.Methods("GET").HandlerFunc(myHandler(keywordByKeywordKeywordHandler))
 
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./public/")))
 	log.Fatal(http.ListenAndServe(":5000", r))
