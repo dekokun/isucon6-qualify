@@ -129,6 +129,26 @@ func starsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func keywordWidgetHandler(w http.ResponseWriter, r *http.Request) {
+	keyword, _ := url.QueryUnescape(mux.Vars(r)["keyword"])
+	row := db.QueryRow(`SELECT * FROM entry WHERE keyword = ?`, keyword)
+	e := Entry{}
+	err := row.Scan(&e.ID, &e.AuthorID, &e.Keyword, &e.Description, &e.UpdatedAt, &e.CreatedAt, &e.Length)
+	if err == sql.ErrNoRows {
+		notFound(w)
+		return
+	}
+
+	e.Html = htmlify(w, r, e.Description)
+	cacheable(w)
+	re.HTML(w, http.StatusOK, "widget/keyword", struct {
+		Context  context.Context
+		Entry  Entry
+	}{
+		r.Context(), e,
+	})
+}
+
 func usernameHandler(w http.ResponseWriter, r *http.Request) {
 	if err := setName(w, r); err != nil {
 		setContext(r, "user_name", "")
@@ -160,7 +180,6 @@ func indexKeywordHandler(w http.ResponseWriter, r *http.Request) {
 		e := Entry{}
 		err := rows.Scan(&e.ID, &e.AuthorID, &e.Keyword, &e.Description, &e.UpdatedAt, &e.CreatedAt, &e.Length)
 		panicIf(err)
-		e.Html = htmlify(w, r, e.Description)
 		entries = append(entries, &e)
 	}
 	rows.Close()
@@ -180,7 +199,7 @@ func indexKeywordHandler(w http.ResponseWriter, r *http.Request) {
 		pages = append(pages, i)
 	}
 
-	cacheable(w)
+	notcache(w)
 	re.HTML(w, http.StatusOK, "index_keyword", struct {
 		Context  context.Context
 		Entries  []*Entry
@@ -337,7 +356,6 @@ func keywordByKeywordKeywordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	e.Html = htmlify(w, r, e.Description)
 	cacheable(w)
 	w.Header().Set("Keyword", strconv.Itoa(e.ID))
 	re.HTML(w, http.StatusOK, "keyword_keyword", struct {
@@ -562,6 +580,7 @@ func main() {
 	r.HandleFunc("/robots.txt", myHandler(robotsHandler))
 	r.HandleFunc("/keyword", myHandler(keywordPostHandler)).Methods("POST")
 	r.HandleFunc("/stars/{keyword}", myHandler(starsHandler)).Methods("GET")
+	r.HandleFunc("/keyword_widget/{keyword}", myHandler(keywordWidgetHandler)).Methods("GET")
 	r.HandleFunc("/username", myHandler(usernameHandler)).Methods("GET")
 
 	l := r.PathPrefix("/login").Subrouter()

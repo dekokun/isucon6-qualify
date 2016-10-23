@@ -9,7 +9,7 @@
 {{ $page := .Page }}
 
 {{ range .Entries }}
-  {{ template "widget/keyword" entry_with_ctx . $.Context }}
+<esi:include src="/keyword_widget/{{ .Keyword }}"/>
 {{ end }}
 
 <nav class="pagination">
