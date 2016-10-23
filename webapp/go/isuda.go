@@ -308,7 +308,7 @@ func keywordByKeywordKeywordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	e.Html = htmlify(w, r, e.Description)
 	cacheable(w)
-	w.Header().Set("Keyword", url.QueryEscape(keyword))
+	w.Header().Set("Keyword", pathURIEscape(keyword))
 	re.HTML(w, http.StatusOK, "keyword_keyword", struct {
 		Context context.Context
 		Entry   Entry
