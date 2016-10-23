@@ -344,28 +344,6 @@ func register(user string, pass string) int64 {
 	return lastInsertID
 }
 
-func keywordByKeywordKeywordHandler(w http.ResponseWriter, r *http.Request) {
-
-	keyword, _ := url.QueryUnescape(mux.Vars(r)["keyword"])
-	row := db.QueryRow(`SELECT * FROM entry WHERE keyword = ?`, keyword)
-	e := Entry{}
-	err := row.Scan(&e.ID, &e.AuthorID, &e.Keyword, &e.Description, &e.UpdatedAt, &e.CreatedAt, &e.Length)
-	if err == sql.ErrNoRows {
-		notFound(w)
-		return
-	}
-
-
-	cacheable(w)
-	w.Header().Set("Keyword", strconv.Itoa(e.ID))
-	re.HTML(w, http.StatusOK, "keyword_keyword", struct {
-		Context context.Context
-		Entry   Entry
-	}{
-		r.Context(), e,
-	})
-}
-
 func keywordByKeywordHandler(w http.ResponseWriter, r *http.Request) {
 	if err := setName(w, r); err != nil {
 		forbidden(w)
@@ -595,9 +573,6 @@ func main() {
 	k := r.PathPrefix("/keyword/{keyword}").Subrouter()
 	k.Methods("GET").HandlerFunc(myHandler(keywordByKeywordHandler))
 	k.Methods("POST").HandlerFunc(myHandler(keywordByKeywordDeleteHandler))
-	kk := r.PathPrefix("/keyword_keyword/{keyword}").Subrouter()
-	kk.Methods("GET").HandlerFunc(myHandler(keywordByKeywordKeywordHandler))
-
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./public/")))
 	log.Fatal(http.ListenAndServe(":5000", r))
 }

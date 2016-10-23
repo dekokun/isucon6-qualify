@@ -1,5 +1,9 @@
 {{ template "base_top" .}}
 
-<esi:include src="/keyword_keyword/{{ .Keyword }}"/>
+<esi:include src="/keyword_widget/{{ .Keyword }}"/>
+<form method="POST">
+  <input type="checkbox" name="delete" value="1">
+  <input class="btn btn-primary" type="submit" value="delete">
+</form>
 
 {{ template "base_bottom" .}}
