@@ -15,6 +15,7 @@ func prepareHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFun
 		} else {
 			baseUrl, _ = url.Parse("http://" + r.Host)
 		}
+		fmt.Println(r.Method, r.URL)
 		fn(w, r)
 	}
 }
