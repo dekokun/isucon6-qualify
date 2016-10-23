@@ -129,8 +129,7 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 		pages = append(pages, i)
 	}
 
-        w.Header().Set("Cache-Control", "public")
-        w.Header().Set("Cache-Control", "max-age=86400")
+        w.Header().Set("Cache-Control", "public, max-age=86400")
 	re.HTML(w, http.StatusOK, "index", struct {
 		Context  context.Context
 		Entries  []*Entry
