@@ -53,6 +53,32 @@ func notcache(w http.ResponseWriter) {
 	w.Header().Set("Cache-Control", "no-cache")
 }
 
+func purge (keyword string) {
+	rows, err := db.Query(`select id from entry where match(description) against(?);`, keyword)
+	if err != nil && err != sql.ErrNoRows {
+		panicIf(err)
+		return
+	}
+		fmt.Println(keyword)
+	keywordids := make(map[int]bool)
+	for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+		panicIf(err)
+		keywordids[id] = true
+	}
+	for id, _ := range keywordids {
+		// cache invalidate
+		req, err := http.NewRequest("INVALIDATE", "http://localhost:6081", nil)
+		req.Header.Add("X-Invalidated-Keyword", strconv.Itoa(id))
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		panicIf(err)
+		resp.Body.Close()
+	}
+	// purgeここまで
+}
+
 func setName(w http.ResponseWriter, r *http.Request) error {
 	session := getSession(w, r)
 	userID, ok := session.Values["user_id"]
@@ -218,6 +244,9 @@ func keywordPostHandler(w http.ResponseWriter, r *http.Request) {
 		author_id = ?, keyword = ?, description = ?, updated_at = NOW()
 	`, userID, keyword, description, userID, keyword, description)
 	panicIf(err)
+
+	purge(keyword)
+
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
@@ -306,9 +335,11 @@ func keywordByKeywordKeywordHandler(w http.ResponseWriter, r *http.Request) {
 		notFound(w)
 		return
 	}
+
+
 	e.Html = htmlify(w, r, e.Description)
 	cacheable(w)
-	w.Header().Set("Keyword", pathURIEscape(keyword))
+	w.Header().Set("Keyword", strconv.Itoa(e.ID))
 	re.HTML(w, http.StatusOK, "keyword_keyword", struct {
 		Context context.Context
 		Entry   Entry

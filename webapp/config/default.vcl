@@ -30,9 +30,8 @@ sub vcl_recv {
   set req.backend_hint = backend.backend();
 
   if (req.method == "INVALIDATE") {
-     # ban("obj.http.Hoge ~ ^.*" + req.http.X-Invalidated-Hoge + ".*$");
-     ban("obj.response ~ ^.*" + req.http.X-Invalidated-Hoge + ".*$");
-    return(synth(200, req.http.X-Invalidated-Hoge + " Purged. Success !!"));
+     ban("obj.http.Keyword ~ ^.*" + req.http.X-Invalidated-Keyword + ".*$");
+    return(synth(200, req.http.X-Invalidated-Keyword + " Purged. Success !!"));
   }
 
 
