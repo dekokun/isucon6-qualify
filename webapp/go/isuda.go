@@ -92,7 +92,8 @@ func initializeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func starsHandler(w http.ResponseWriter, r *http.Request) {
-	stars := loadStars(mux.Vars(r)["keyword"])
+	keyword, _ := url.QueryUnescape(mux.Vars(r)["keyword"])
+	stars := loadStars(keyword)
 	notcache(w)
 	re.HTML(w, http.StatusOK, "stars", struct {
 		Context  context.Context
@@ -306,9 +307,8 @@ func keywordByKeywordKeywordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	e.Html = htmlify(w, r, e.Description)
-
 	cacheable(w)
-	w.Header().Set("Keyword", keyword)
+	w.Header().Set("Keyword", url.QueryEscape(keyword))
 	re.HTML(w, http.StatusOK, "keyword_keyword", struct {
 		Context context.Context
 		Entry   Entry
