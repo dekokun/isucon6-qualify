@@ -45,6 +45,14 @@ func print (s interface{}) {
 	fmt.Println(s)
 }
 
+func cacheable(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+}
+
+func notcache(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-cache")
+}
+
 func setName(w http.ResponseWriter, r *http.Request) error {
 	session := getSession(w, r)
 	userID, ok := session.Values["user_id"]
@@ -83,12 +91,7 @@ func initializeHandler(w http.ResponseWriter, r *http.Request) {
 	re.JSON(w, http.StatusOK, map[string]string{"result": "ok"})
 }
 
-func topHandler(w http.ResponseWriter, r *http.Request) {
-	if err := setName(w, r); err != nil {
-		forbidden(w)
-		return
-	}
-
+func indexKeywordHandler(w http.ResponseWriter, r *http.Request) {
 	perPage := 10
 	p := r.URL.Query().Get("page")
 	if p == "" {
@@ -129,8 +132,8 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 		pages = append(pages, i)
 	}
 
-        w.Header().Set("Cache-Control", "public, max-age=86400")
-	re.HTML(w, http.StatusOK, "index", struct {
+	cacheable(w)
+	re.HTML(w, http.StatusOK, "index_keyword", struct {
 		Context  context.Context
 		Entries  []*Entry
 		Page     int
@@ -138,6 +141,25 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 		Pages    []int
 	}{
 		r.Context(), entries, page, lastPage, pages,
+	})
+}
+
+func topHandler(w http.ResponseWriter, r *http.Request) {
+	p := r.URL.Query().Get("page")
+	if p == "" {
+		p = "1"
+	}
+	page, _ := strconv.Atoi(p)
+	if err := setName(w, r); err != nil {
+		forbidden(w)
+		return
+	}
+	notcache(w)
+	re.HTML(w, http.StatusOK, "index", struct {
+		Context  context.Context
+		Page     int
+	}{
+		r.Context(), page,
 	})
 }
 
@@ -462,6 +484,7 @@ func main() {
 	r := mux.NewRouter()
 	r.UseEncodedPath()
 	r.HandleFunc("/", myHandler(topHandler))
+	r.HandleFunc("/index_keyword", myHandler(indexKeywordHandler))
 	r.HandleFunc("/initialize", myHandler(initializeHandler)).Methods("GET")
 	r.HandleFunc("/robots.txt", myHandler(robotsHandler))
 	r.HandleFunc("/keyword", myHandler(keywordPostHandler)).Methods("POST")
