@@ -35,10 +35,6 @@ sub vcl_recv {
   }
 
 
-  # if (req.http.Cookie) {
-  #     return(pass);
-  # }
-
   if (req.method != "GET" && req.method != "HEAD") {
       return(pass);
   }
