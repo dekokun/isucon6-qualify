@@ -141,6 +141,7 @@ func keywordWidgetHandler(w http.ResponseWriter, r *http.Request) {
 
 	e.Html = htmlify(w, r, e.Description)
 	cacheable(w)
+	w.Header().Set("Keyword", strconv.Itoa(e.ID))
 	re.HTML(w, http.StatusOK, "widget/keyword", struct {
 		Context  context.Context
 		Entry  Entry
