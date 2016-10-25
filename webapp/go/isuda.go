@@ -41,7 +41,8 @@ var (
 
 	errInvalidUser = errors.New("Invalid User")
 )
-func print (s interface{}) {
+
+func print(s interface{}) {
 	fmt.Println(s)
 }
 
@@ -53,13 +54,13 @@ func notcache(w http.ResponseWriter) {
 	w.Header().Set("Cache-Control", "no-cache")
 }
 
-func purge (keyword string) {
+func purge(keyword string) {
 	rows, err := db.Query(`select id from entry where match(description) against(?);`, keyword)
 	if err != nil && err != sql.ErrNoRows {
 		panicIf(err)
 		return
 	}
-		fmt.Println(keyword)
+	fmt.Println(keyword)
 	keywordids := make(map[int]bool)
 	for rows.Next() {
 		var id int
@@ -122,8 +123,8 @@ func starsHandler(w http.ResponseWriter, r *http.Request) {
 	stars := loadStars(keyword)
 	notcache(w)
 	re.HTML(w, http.StatusOK, "stars", struct {
-		Context  context.Context
-		Stars  []*Star
+		Context context.Context
+		Stars   []*Star
 	}{
 		r.Context(), stars,
 	})
@@ -143,8 +144,8 @@ func keywordWidgetHandler(w http.ResponseWriter, r *http.Request) {
 	cacheable(w)
 	w.Header().Set("Keyword", strconv.Itoa(e.ID))
 	re.HTML(w, http.StatusOK, "widget/keyword", struct {
-		Context  context.Context
-		Entry  Entry
+		Context context.Context
+		Entry   Entry
 	}{
 		r.Context(), e,
 	})
@@ -155,7 +156,7 @@ func usernameHandler(w http.ResponseWriter, r *http.Request) {
 		setContext(r, "user_name", "")
 	}
 	re.HTML(w, http.StatusOK, "username", struct {
-		Context  context.Context
+		Context context.Context
 	}{
 		r.Context(),
 	})
@@ -224,8 +225,8 @@ func topHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	notcache(w)
 	re.HTML(w, http.StatusOK, "index", struct {
-		Context  context.Context
-		Page     int
+		Context context.Context
+		Page    int
 	}{
 		r.Context(), page,
 	})
@@ -421,7 +422,7 @@ func htmlify(w http.ResponseWriter, r *http.Request, content string) string {
 	for _, entry := range entries {
 		keywords = append(keywords, regexp.QuoteMeta(entry.Keyword))
 	}
-	re := regexp.MustCompile("("+strings.Join(keywords, "|")+")")
+	re := regexp.MustCompile("(" + strings.Join(keywords, "|") + ")")
 	kw2sha := make(map[string]string)
 	content = re.ReplaceAllStringFunc(content, func(kw string) string {
 		kw2sha[kw] = "isuda_" + fmt.Sprintf("%x", sha1.Sum([]byte(kw)))
@@ -429,7 +430,7 @@ func htmlify(w http.ResponseWriter, r *http.Request, content string) string {
 	})
 	content = html.EscapeString(content)
 	for kw, hash := range kw2sha {
-		u, err := r.URL.Parse(baseUrl.String()+"/keyword/" + pathURIEscape(kw))
+		u, err := r.URL.Parse(baseUrl.String() + "/keyword/" + pathURIEscape(kw))
 		panicIf(err)
 		link := fmt.Sprintf("<a href=\"%s\">%s</a>", u, html.EscapeString(kw))
 		content = strings.Replace(content, hash, link, -1)
