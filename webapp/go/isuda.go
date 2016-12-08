@@ -71,7 +71,7 @@ func purge(keyword string) {
 	for id, _ := range keywordids {
 		// cache invalidate
 		req, err := http.NewRequest("INVALIDATE", "http://localhost:6081", nil)
-		req.Header.Add("X-Invalidated-Keyword", strconv.Itoa(id))
+		req.Header.Add("X-INVALIDATED-KEYWORD", strconv.Itoa(id))
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		panicIf(err)
@@ -142,7 +142,7 @@ func keywordWidgetHandler(w http.ResponseWriter, r *http.Request) {
 
 	e.Html = htmlify(w, r, e.Description)
 	cacheable(w)
-	w.Header().Set("Keyword", strconv.Itoa(e.ID))
+	w.Header().Set("KEYWORD", strconv.Itoa(e.ID))
 	re.HTML(w, http.StatusOK, "widget/keyword", struct {
 		Context context.Context
 		Entry   Entry
